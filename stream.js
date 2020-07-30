@@ -12,11 +12,13 @@ function suscripcion(nombre,nuevoUsuario,socket){
     socket.on(nombre,(data)=>{
         //subscribirse unirse a sala
         console.log(`datos entrada : ${data}`);
-        return;
+        const jsonObject = JSON.parse(`${data}`)    
+        console.log(`room : ${jsonObject.room}`);
         socket.join(data.room);
         socket.join(data.socketId);
 
         if( socket.adapter.rooms[data.room].length > 1  ){
+            
             socket.to(data.room).emit(nuevoUsuario,{socketId : data.socketId });
         }
 
