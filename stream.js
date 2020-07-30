@@ -11,15 +11,15 @@ const stream = (socket)=>{
 function suscripcion(nombre,nuevoUsuario,socket){
     socket.on(nombre,(data)=>{
         //subscribirse unirse a sala
-        console.log(`datos entrada : ${data}`);
+        
         const jsonObject = JSON.parse(`${data}`)    
-        console.log(`room : ${jsonObject.room}`);
-        socket.join(data.room);
-        socket.join(data.socketId);
+        
+        socket.join(jsonObject.room);
+        socket.join(jsonObject.socketId);
 
-        if( socket.adapter.rooms[data.room].length > 1  ){
-            
-            socket.to(data.room).emit(nuevoUsuario,{socketId : data.socketId });
+        if( socket.adapter.rooms[jsonObject.room].length > 1  ){
+            console.log(`room : ${jsonObject.room}`);
+            socket.to(jsonObject.room).emit(nuevoUsuario,{socketId : jsonObject.socketId });
         }
 
     });
