@@ -1,49 +1,50 @@
 const stream = (socket)=>{
-
-    suscripcion(socket);
-    newUserStart(socket);
-    sdp(socket);
-    iceCandidates(socket);
-    chat(socket);
+    console.log("llega una nueva solicitud al stream ");
+    return;
+    suscripcion('subscribe','new user',socket);
+    newUserStart('newUserStart',socket);
+    sdp('sdp',socket);
+    iceCandidates('ice candidates',socket);
+    chat('chat',socket);
 
 }
 
-function suscripcion(socket){
-    socket.on('subscribe',(data)=>{
+function suscripcion(nombre,nuevoUsuario,socket){
+    socket.on(nombre,(data)=>{
         //subscribirse unirse a sala
         socket.join(data.room);
         socket.join(data.socketId);
 
         if( socket.adapter.rooms[data.room].length > 1  ){
-            socket.to(data.room).emit('new user',{socketId : data.socketId });
+            socket.to(data.room).emit(nuevoUsuario,{socketId : data.socketId });
         }
 
     });
 }
 
-function newUserStart(socket){
-    socket.on('newUserStart',(data)=>{
-        socket.to(data.to).emit('newUserStart',{ sender : data.sender });
+function newUserStart(nombre,socket){
+    socket.on(nombre,(data)=>{
+        socket.to(data.to).emit(nombre,{ sender : data.sender });
     });
 }
 
-function sdp(socket){
-    socket.on('sdp',(data)=>{
-        socket.to(data.to).emit('sdp', { description : data.description, sender : data.sender });
+function sdp(nombre,socket){
+    socket.on(nombre,(data)=>{
+        socket.to(data.to).emit(nombre, { description : data.description, sender : data.sender });
     });
 }
 
-function iceCandidates(socket){
+function iceCandidates(nombre,socket){
 
-    socket.on('ice candidates',(data)=>{
-        socket.to(data.to).emit('ice candidates',{ candidate : data.candidate, sender : data.sender });
+    socket.on(nombre,(data)=>{
+        socket.to(data.to).emit(nombre,{ candidate : data.candidate, sender : data.sender });
     })
 
 }
 
-function chat(socket){
-    socket.on('chat',(data)=>{
-        socket.to(data.room).emit('chat',{ sender : data.sender, msg : data.msg });
+function chat(nombre,socket){
+    socket.on(nombre,(data)=>{
+        socket.to(data.room).emit(nombre,{ sender : data.sender, msg : data.msg });
     });
 }
 
