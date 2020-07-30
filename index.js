@@ -10,15 +10,17 @@ app.get('/',(req,res)=>{
 let io = require('socket.io')(server);
 let streaming = require('./stream');
 
-/*
+
 io.of('/').on('connection',(socket)=>{
-    console.log("hola mundo");
+    streaming(socket);
+
 });
-*/
+
+/*
 io.of('/').on('connect',(socket)=>{
-    console.log("Llegue hasta connect");
     streaming(socket);
 })
+*/
 
 const puerto = 3000;
 server.listen(puerto);

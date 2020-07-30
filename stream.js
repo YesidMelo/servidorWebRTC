@@ -1,7 +1,6 @@
 const stream = (socket)=>{
-    console.log("llega una nueva solicitud al stream ");
-    return;
     suscripcion('subscribe','new user',socket);
+    return;
     newUserStart('newUserStart',socket);
     sdp('sdp',socket);
     iceCandidates('ice candidates',socket);
@@ -12,6 +11,8 @@ const stream = (socket)=>{
 function suscripcion(nombre,nuevoUsuario,socket){
     socket.on(nombre,(data)=>{
         //subscribirse unirse a sala
+        console.log(`datos entrada : ${data}`);
+        return;
         socket.join(data.room);
         socket.join(data.socketId);
 
