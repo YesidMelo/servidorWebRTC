@@ -24,7 +24,8 @@ function suscripcion(nombre,nuevoUsuario,socket){
             }
 
             var jsonAEnviar = { sockets : listaSockets}
-            socket.to(convertirAJson(data).room).emit(nuevoUsuario, jsonAEnviar)
+            socket.to(convertirAJson(data).room).emit(nuevoUsuario,jsonAEnviar);
+            
         }
 
     });
@@ -37,16 +38,15 @@ function convertirAJson(data){
 function newUserStart(nombre,socket){
     socket.on(nombre,(data)=>{
         console.log(`llegue a ${nombre} ${data}`);
-        return;
         socket.to(convertirAJson(data).to).emit(nombre,{ sender : convertirAJson(data).sender });
     });
 }
 
 function sdp(nombre,socket){
     socket.on(nombre,(data)=>{
-        console.log(`llegue a sdp ${convertirAJson(data).to}`);
-        return;
+        //console.log(`llegue a sdp ${data}`);
         socket.to(convertirAJson(data).to).emit(nombre, { description : convertirAJson(data).description, sender : convertirAJson(data).sender });
+        
     });
 }
 
@@ -54,7 +54,6 @@ function iceCandidates(nombre,socket){
     
     socket.on(nombre,(data)=>{
         console.log(`data iceCandidates : ${data}`);
-        return
         socket.to(convertirAJson(data).to).emit(nombre,{ candidate : convertirAJson(data).candidate, sender : convertirAJson(data).sender });
     })
 
