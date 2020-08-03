@@ -1,5 +1,5 @@
 const logRespuesta = 'log';
-const crear_o_unir = "create or join"
+
 const creado = "created";
 const unir = "join";
 const unido = "joined";
@@ -18,29 +18,9 @@ const stream = (io,socket,os)=>{
     }
 
     escuchadorMensaje(log,socket);
+    escuchadorCrearOUnirHabitacion(log,socket,io);
   
-    socket.on(crear_o_unir, function(room) {
-      log('recibe solicitud para crear o unir a la habitacion :' + room);
-  
-      var clientsInRoom = io.sockets.adapter.rooms[room];
-      var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
-      log('Habitacion ' + room + ' tiene ahora ' + numClients + ' cliente(s)');
-  
-      if (numClients === 0) {
-        socket.join(room);
-        log('id del cliente ' + socket.id + ' habitacion creada ' + room);
-        socket.emit(creado, room, socket.id);
-  
-      } else if (numClients === 1) {
-        log('id del cliente ' + socket.id + ' se ha unido a la habitacion ' + room);
-        io.sockets.in(room).emit(unir, room);
-        socket.join(room);
-        socket.emit(unido, room, socket.id);
-        io.sockets.in(room).emit(leer);
-      } else { // max two clients
-        socket.emit(lleno, room);
-      }
-    });
+    
   
     socket.on(ipAddr, function() {
       var ifaces = os.networkInterfaces();
@@ -68,6 +48,32 @@ function escuchadorMensaje(funcionLog,socket){
         socket.broadcast.emit(mensaje, message);
       });
 
+}
+
+const crear_o_unir = "create or join"
+function escuchadorCrearOUnirHabitacion(log,socket,io){
+    socket.on(crear_o_unir, function(room) {
+        log('recibe solicitud para crear o unir a la habitacion :' + room);
+    
+        var clientsInRoom = io.sockets.adapter.rooms[room];
+        var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
+        log('Habitacion ' + room + ' tiene ahora ' + numClients + ' cliente(s)');
+    
+        if (numClients === 0) {
+          socket.join(room);
+          log('id del cliente ' + socket.id + ' habitacion creada ' + room);
+          socket.emit(creado, room, socket.id);
+    
+        } else if (numClients === 1) {
+          log('id del cliente ' + socket.id + ' se ha unido a la habitacion ' + room);
+          io.sockets.in(room).emit(unir, room);
+          socket.join(room);
+          socket.emit(unido, room, socket.id);
+          io.sockets.in(room).emit(leer);
+        } else { // max two clients
+          socket.emit(lleno, room);
+        }
+      });
 }
 
 module.exports = stream;
