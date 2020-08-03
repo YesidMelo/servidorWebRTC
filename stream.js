@@ -1,10 +1,5 @@
 const logRespuesta = 'log';
 
-const creado = "created";
-const unir = "join";
-const unido = "joined";
-const leer = "ready";
-const lleno = "full";
 const ipAddr = "ipaddr";
 const adios = "bye";
 
@@ -19,19 +14,11 @@ const stream = (io,socket,os)=>{
 
     escuchadorMensaje(log,socket);
     escuchadorCrearOUnirHabitacion(log,socket,io);
+    escuchadorIp(socket,os);
   
     
   
-    socket.on(ipAddr, function() {
-      var ifaces = os.networkInterfaces();
-      for (var dev in ifaces) {
-        ifaces[dev].forEach(function(details) {
-          if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
-            socket.emit(ipAddr, details.address);
-          }
-        });
-      }
-    });
+    
   
     socket.on(adios, function(){
       console.log('received bye');
@@ -51,6 +38,11 @@ function escuchadorMensaje(funcionLog,socket){
 }
 
 const crear_o_unir = "create or join"
+const creado = "created";
+const unir = "join";
+const unido = "joined";
+const leer = "ready";
+const lleno = "full";
 function escuchadorCrearOUnirHabitacion(log,socket,io){
     socket.on(crear_o_unir, function(room) {
         log('recibe solicitud para crear o unir a la habitacion :' + room);
@@ -72,6 +64,19 @@ function escuchadorCrearOUnirHabitacion(log,socket,io){
           io.sockets.in(room).emit(leer);
         } else { // max two clients
           socket.emit(lleno, room);
+        }
+      });
+}
+
+function escuchadorIp(socket,os){
+    socket.on(ipAddr, function() {
+        var ifaces = os.networkInterfaces();
+        for (var dev in ifaces) {
+          ifaces[dev].forEach(function(details) {
+            if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
+              socket.emit(ipAddr, details.address);
+            }
+          });
         }
       });
 }
