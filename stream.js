@@ -1,59 +1,73 @@
+const logRespuesta = 'log';
+const crear_o_unir = "create or join"
+const creado = "created";
+const unir = "join";
+const unido = "joined";
+const leer = "ready";
+const lleno = "full";
+const ipAddr = "ipaddr";
+const adios = "bye";
 
 const stream = (io,socket,os)=>{
+
     // convenience function to log server messages on the client
     function log() {
-        var array = ['Message from server:'];
-        array.push.apply(array, arguments);
-        socket.emit('log', array);
-      }  
-      
-      
-    socket.on('message', function(message) {
-        log('Client said: ', message);
-        // for a real app, would be room-only (not broadcast)
-        socket.broadcast.emit('message', message);
-      });
-    
-      socket.on('create or join', function(room) {
-        log('Received request to create or join room ' + room);
-    
-        var clientsInRoom = io.sockets.adapter.rooms[room];
-        var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
-        log('Room ' + room + ' now has ' + numClients + ' client(s)');
-    
-        if (numClients === 0) {
-          socket.join(room);
-          log('Client ID ' + socket.id + ' created room ' + room);
-          socket.emit('created', room, socket.id);
-    
-        } else if (numClients === 1) {
-          log('Client ID ' + socket.id + ' joined room ' + room);
-          io.sockets.in(room).emit('join', room);
-          socket.join(room);
-          socket.emit('joined', room, socket.id);
-          io.sockets.in(room).emit('ready');
-        } else { // max two clients
-          socket.emit('full', room);
-        }
-      });
-    
-      socket.on('ipaddr', function() {
-        var ifaces = os.networkInterfaces();
-        for (var dev in ifaces) {
-          ifaces[dev].forEach(function(details) {
-            if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
-              socket.emit('ipaddr', details.address);
-            }
-          });
-        }
-      });
-    
-      socket.on('bye', function(){
-        console.log('received bye');
-      });
+      var array = ['Mensaje del servidor:'];
+      array.push.apply(array, arguments);
+      socket.emit(logRespuesta, array);
+    }
+
+    escuchadorMensaje(log,socket);
+  
+    socket.on(crear_o_unir, function(room) {
+      log('recibe solicitud para crear o unir a la habitacion :' + room);
+  
+      var clientsInRoom = io.sockets.adapter.rooms[room];
+      var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
+      log('Habitacion ' + room + ' tiene ahora ' + numClients + ' cliente(s)');
+  
+      if (numClients === 0) {
+        socket.join(room);
+        log('id del cliente ' + socket.id + ' habitacion creada ' + room);
+        socket.emit(creado, room, socket.id);
+  
+      } else if (numClients === 1) {
+        log('id del cliente ' + socket.id + ' se ha unido a la habitacion ' + room);
+        io.sockets.in(room).emit(unir, room);
+        socket.join(room);
+        socket.emit(unido, room, socket.id);
+        io.sockets.in(room).emit(leer);
+      } else { // max two clients
+        socket.emit(lleno, room);
+      }
+    });
+  
+    socket.on(ipAddr, function() {
+      var ifaces = os.networkInterfaces();
+      for (var dev in ifaces) {
+        ifaces[dev].forEach(function(details) {
+          if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
+            socket.emit(ipAddr, details.address);
+          }
+        });
+      }
+    });
+  
+    socket.on(adios, function(){
+      console.log('received bye');
+    });
   
 }
 
+const mensaje = "message";
+function escuchadorMensaje(funcionLog,socket){
+    
+    socket.on(mensaje, function(message) {
+        funcionLog('Cliente dice: ', message);
+        // for a real app, would be room-only (not broadcast)
+        socket.broadcast.emit(mensaje, message);
+      });
 
+}
 
 module.exports = stream;
