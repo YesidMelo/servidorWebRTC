@@ -1,8 +1,8 @@
+/**
+ * esta aplicacionon esta basada en el codigo :  
+ */
+
 const logRespuesta = 'log';
-
-const ipAddr = "ipaddr";
-const adios = "bye";
-
 const stream = (io,socket,os)=>{
 
     // convenience function to log server messages on the client
@@ -15,14 +15,7 @@ const stream = (io,socket,os)=>{
     escuchadorMensaje(log,socket);
     escuchadorCrearOUnirHabitacion(log,socket,io);
     escuchadorIp(socket,os);
-  
-    
-  
-    
-  
-    socket.on(adios, function(){
-      console.log('received bye');
-    });
+    escuchadorAdios(socket);
   
 }
 
@@ -68,6 +61,7 @@ function escuchadorCrearOUnirHabitacion(log,socket,io){
       });
 }
 
+const ipAddr = "ipaddr";
 function escuchadorIp(socket,os){
     socket.on(ipAddr, function() {
         var ifaces = os.networkInterfaces();
@@ -80,5 +74,13 @@ function escuchadorIp(socket,os){
         }
       });
 }
+
+const adios = "bye";
+function escuchadorAdios(socket){
+    socket.on(adios, function(){
+        console.log('received bye');
+      });
+}
+
 
 module.exports = stream;
