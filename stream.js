@@ -1,5 +1,14 @@
 /**
- * esta aplicacionon esta basada en el codigo :  
+ * esta aplicacionon esta basada en el codigo : https://github.com/shivammaindola/AndroidWebRTC 
+ * 
+ * adicionar en el index para usar el repo de videollamada
+ *  const stream = require('./stream');
+    const io = require('socket.io')(server);
+    const os = require('os');
+    io.of('/').on('connection',(socket)=>{
+        stream(io,socket,os);
+    });
+ * 
  */
 
 const logRespuesta = 'log';
