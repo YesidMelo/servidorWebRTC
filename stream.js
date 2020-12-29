@@ -47,19 +47,19 @@ const leer = "ready";
 const lleno = "full";
 function escuchadorCrearOUnirHabitacion(log,socket,io){
     socket.on(crear_o_unir, function(room) {
-        log('recibe solicitud para crear o unir a la habitacion :' + room);
+        console.log('recibe solicitud para crear o unir a la habitacion :' + room);
     
         var clientsInRoom = io.sockets.adapter.rooms[room];
         var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
-        log('Habitacion ' + room + ' tiene ahora ' + numClients + ' cliente(s)');
+        console.log('Habitacion ' + room + ' tiene ahora ' + numClients + ' cliente(s)');
     
         if (numClients === 0) {
           socket.join(room);
-          log('id del cliente ' + socket.id + ' habitacion creada ' + room);
+          console.log('id del cliente ' + socket.id + ' habitacion creada ' + room);
           socket.emit(creado, room, socket.id);
     
         } else if (numClients === 1) {
-          log('id del cliente ' + socket.id + ' se ha unido a la habitacion ' + room);
+          console.log('id del cliente ' + socket.id + ' se ha unido a la habitacion ' + room);
           io.sockets.in(room).emit(unir, room);
           socket.join(room);
           socket.emit(unido, room, socket.id);

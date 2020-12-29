@@ -14,8 +14,6 @@ app.get('/',(solicitud,respuesta)=>{
     respuesta.send("mola");
 });
 
-const puerto = process.env.PORT || 3000;
-server.listen(puerto);
 
 //inicio configuracion de socket
 const stream = require('./stream');
@@ -24,4 +22,13 @@ const os = require('os');
 io.of('/').on('connection',(socket)=>{
     stream(io,socket,os);
 });
-  
+
+
+//inicializa el puerto
+const puerto = process.env.PORT || 3000;
+server.listen(puerto,()=>{
+    console.log("listening on * : "+puerto)
+});
+
+
+
