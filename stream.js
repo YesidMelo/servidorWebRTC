@@ -86,9 +86,12 @@ function escuchadorIp(socket,os){
 
 const adios = "bye";
 function escuchadorAdios(socket){
-    socket.on(adios, function(){
+    socket.on(adios, function(sala){
+        socket.leave(sala);
+        socket.to(sala).emit(adios,socket.id);
         console.log('received bye');
-      });
+    });
+      
 }
 
 
