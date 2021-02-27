@@ -1,3 +1,86 @@
+const adios = "bye";
+const connect = "connect";
+const creado = "created";
+const crear_o_unir = "create or join"
+const ipAddr = "ipaddr";
+const leer = "ready";
+const lleno = "full";
+const mensaje = "message";
+const unido = "joined";
+const unir = "join";
+
+
+const stream = (io,socket,os) =>{
+  escucharAdios(io,socket,os);
+  escucharcreado(io,socket,os);
+  escucharcrear_o_unir(io,socket,os);
+  escucharipAddr(io,socket,os);
+  escucharleer(io,socket,os);
+  escucharmensaje(io,socket,os);
+  
+}
+
+function escucharAdios(io,socket,os) {
+  socket.on( adios, function(sala) {
+    console.log("EscuchoAdios");
+      socket.leave(sala);
+      socket.to(sala).emit(adios,socket.id);
+  });
+}
+
+function escucharcreado(io,socket,os){
+  socket.on(creado,function (sala){
+    console.log(" llegue a creado");
+  })
+}
+
+function escucharcrear_o_unir(io,socket,os){
+  socket.on(crear_o_unir,function (sala){
+      var clientesEnSala = io.nsps['/'].adapter.rooms[sala];
+      var numeroClientesEnSala = clientesEnSala ? Object.keys(clientesEnSala.sockets).length : 0 ;
+      console.log("numero de clientes en sala es : "+numeroClientesEnSala);
+
+      if(numeroClientesEnSala === 0) {
+
+        socket.join(sala);
+        console.log("el cliente "+socket.id+" se ha creado la sala "+sala);
+        socket.emit(creado,sala,socket.id);
+
+      } else if(numeroClientesEnSala === 1) {
+
+        console.log("el cliente "+socket.id+" se ha unido a la sala "+sala);
+        io.sockets.in(sala).emit(unir,sala);
+        socket.join(sala);
+        socket.emit(unido,sala,socket.id);
+        io.sockets.in(sala).emit(leer);
+
+      } else {
+
+        socket.emit(lleno,sala);
+
+      }
+  })
+}
+function escucharipAddr(io,socket,os){
+  socket.on(ipAddr,function (sala){
+    console.log(" llegue a ipAddr");
+  })
+}
+function escucharleer(io,socket,os){
+  socket.on(leer,function (sala){
+    console.log(" llegue a leer");
+  })
+}
+
+function escucharmensaje(io,socket,os){
+  socket.on(mensaje,function (transmisor){
+    socket.broadcast.emit(mensaje,transmisor);
+    console.log(" llegue a mensaje");
+  })
+}
+
+module.exports = stream;
+
 /**
  * esta aplicacionon esta basada en el codigo : https://github.com/shivammaindola/AndroidWebRTC 
  * 
@@ -10,7 +93,7 @@
     });
  * 
  */
-
+/*
 const logRespuesta = 'log';
 const stream = (io,socket,os)=>{
 
@@ -96,3 +179,4 @@ function escuchadorAdios(socket){
 
 
 module.exports = stream;
+*/
