@@ -16,13 +16,14 @@ app.get('/',(solicitud,respuesta)=>{
 
 
 //inicio configuracion de socket
-const stream = require('./stream');
+//const stream = require('./stream');
+const streaming = require('./streaming');
 const io = require('socket.io')(server);
 const os = require('os');
 io.of('/').on('connection',(socket)=>{
-    stream(io,socket,os);
+    //stream(io,socket,os);
+    streaming(io,socket,os);
 });
-
 
 //inicializa el puerto
 const puerto = process.env.PORT || 3000;
