@@ -21,8 +21,8 @@ const streaming = require('./streaming');
 const io = require('socket.io')(server);
 const os = require('os');
 io.of('/').on('connection',(socket)=>{
-    //stream(io,socket,os);
-    streaming(io,socket,os);
+    stream(io,socket,os);
+    //streaming(io, socket, os);
 });
 
 //inicializa el puerto
