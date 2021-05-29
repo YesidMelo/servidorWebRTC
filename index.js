@@ -15,14 +15,21 @@ app.get('/',(solicitud,respuesta)=>{
 });
 
 
-//inicio configuracion de socket
+//Configuracion inicial socket
 //const stream = require('./stream');
-const streaming = require('./streaming');
+
+//Configuracion tentativa
+//const streaming = require('./streaming');
+
+//configuracion de lanzamiento
+const streaming = require('./streamPrimerLanzamiento');
+
 const io = require('socket.io')(server);
 const os = require('os');
-io.of('/').on('connection',(socket)=>{
-    stream(io,socket,os);
+io.of('/stream').on('connection',(socket)=>{
+    //stream(io,socket,os);
     //streaming(io, socket, os);
+    streaming(io, socket, os)
 });
 
 //inicializa el puerto
