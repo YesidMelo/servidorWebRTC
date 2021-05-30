@@ -1,3 +1,5 @@
+const namespace = "/stream";
+
 //registro usuario
 const conexionEstablecida = "conexionEstablecida";
 const registrarUsuario = "registrarUsuario";
@@ -6,8 +8,10 @@ const finalizarRegistroUsuario = "finalizarRegistroUsuario";
 //negociacion webrtc
 const unirASala = "unirASala";
 const salirDeSala = "salirDeSala";
+const enviarOfertaReceptor = "enviarOfertaReceptor"
 
 var usuariosRegistrados = {};
+var detalleWebRTCDeUsuario = {};
 
 const streaming = (io, socket, os) => {
     
@@ -19,6 +23,7 @@ const streaming = (io, socket, os) => {
     ///manejo de la videollamada
     unirmeASala(io, socket, os)
     salirSala(io, socket, os)
+    enviarOfertaAReceptor(io, socket, os)
     console.log("hola Mundo");
 }
 
@@ -55,9 +60,9 @@ function registrarUsuarioACanal(io, socket, os) {
 //union y desvinculacion a sala socket
 function unirmeASala(io, socket, os) {
     socket.on(unirASala, (data)=>{
-        var clientesEnSala = io.nsps["/stream"].adapter.rooms[data.Sala];
+        const detalle = JSON.parse(JSON.stringify(data))
+        var clientesEnSala = io.nsps[namespace].adapter.rooms[data.Sala];
         var numeroClientesEnSala = clientesEnSala ? Object.keys(clientesEnSala.sockets).length : 0 ;
-        console.log(clientesEnSala);
 
         if(numeroClientesEnSala === 0) {
             socket.join(data.Sala)
@@ -65,8 +70,10 @@ function unirmeASala(io, socket, os) {
         } else if(numeroClientesEnSala === 1) {
             socket.join(data.Sala)
             socket.emit(unirASala,{ seUnio: true, mensaje: "Se ha unido a la sala"})
-        } else {
-            socket.emit(unirASala, {seUnio: false, mensaje: "La sala esta llena"})
+        } else if(numeroClientesEnSala >= 2) {
+            if(!io.nsps[namespace].adapter.rooms[data.Sala].sockets[usuariosRegistrados[detalle.emisor]]) {
+                socket.emit(unirASala, {seUnio: false, mensaje: "La sala esta llena"})
+            }
         }
 
     });
@@ -75,13 +82,33 @@ function unirmeASala(io, socket, os) {
 function salirSala(io, socket, os) {
     socket.on(salirDeSala,(data)=>{
         const detalle = JSON.parse(JSON.stringify(data))
+        if(detalleWebRTCDeUsuario[detalle.emisor] !== undefined) {
+            detalleWebRTCDeUsuario[detalle.emisor] = undefined
+        }
         console.log(detalle);
         socket.leave(data.Sala)
         socket.emit(salirDeSala,{desvinculado: true})
+
     });
 }
 
-//manejo de oferta y respuesta webrtc
+//Manejador oferta webrtc
+function enviarOfertaAReceptor(io, socket, os) {
+    socket.on(enviarOfertaReceptor, (data)=>{
+        
+        const detalle = JSON.parse(JSON.stringify(data))
+        detalleWebRTCDeUsuario[detalle.emisor] = detalle
+
+        if(detalleWebRTCDeUsuario[detalle.receptor] == undefined) {
+            console.log("Usuario no conectado")
+        } else {
+            io.of(namespace).to(usuariosRegistrados[detalle.emisor]).emit(enviarOfertaReceptor,detalleWebRTCDeUsuario[detalle.receptor])
+            //io.of(namespace).to(usuariosRegistrados[detalle.receptor]).emit(enviarOfertaReceptor,detalleWebRTCDeUsuario[detalle.emisor])
+        }
+        console.log(detalle)
+        
+    });
+}
 
 
 
