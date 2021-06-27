@@ -6,15 +6,23 @@ const registrarUsuario = "registrarUsuario";
 const finalizarRegistroUsuario = "finalizarRegistroUsuario";
 
 //negociacion webrtc
+const salaCreada = "salaCreada";
 const unirASala = "unirASala";
+const salaLlena = "salaLlena"
 const salirDeSala = "salirDeSala";
-const enviarOfertaReceptor = "enviarOfertaReceptor"
+const receptorSalioDeSala = "receptorSalioDeSala"
+const mensaje = "mensaje"
+const tiempoVideollamada = "tiempoVideollamada"
+const finalizoVideollamadaTiempo = "finalizoVideollamadaTiempo"
+const finalizoVideollamadaUsuario = "finalizoVideollamadaTiempo"
+
 
 var usuariosRegistrados = {};
 var detalleWebRTCDeUsuario = {};
+var tiempoVideollamadaSala = {};
 
 const streaming = (io, socket, os) => {
-    
+ 
     //Estados de conexion dentro de la app
     conectarUsuario(io, socket, os);
     registrarUsuarioACanal(io, socket, os);
@@ -23,7 +31,10 @@ const streaming = (io, socket, os) => {
     ///manejo de la videollamada
     unirmeASala(io, socket, os)
     salirSala(io, socket, os)
-    enviarOfertaAReceptor(io, socket, os)
+    recibirMensaje(io, socket, os)
+    recibirTiempoVideollamada(io, socket, os);
+    finalizoVideollamadaPorTiempo(io, socket, os);
+    finalizoVideollamadaPorUsuario(io, socket, os);
     console.log("hola Mundo");
 }
 
@@ -35,11 +46,14 @@ function conectarUsuario(io, socket, os) {
 
 function desvicularUsuario(io, socket, os) {
     socket.on(finalizarRegistroUsuario, (data) => {
-        console.log("datos: "+ usuario["usuario"]);
-        if(usuariosRegistrados[usuario.usuario] != undefined) {
-            usuariosRegistrados[usuario.usuario] = undefined;
+        var detalle = JSON.parse(JSON.stringify(data))
+        console.log("datos: "+ detalle.usuario);
+        
+        if(usuariosRegistrados[detalle.usuario] != undefined) {
+            usuariosRegistrados[detalle.usuario] = undefined;
         }
         socket.emit(finalizarRegistroUsuario, {});
+        
     })
 }
 
@@ -66,13 +80,15 @@ function unirmeASala(io, socket, os) {
 
         if(numeroClientesEnSala === 0) {
             socket.join(data.Sala)
-            socket.emit(unirASala,{ seUnio: true, mensaje: "Se ha unido a la sala"})
+            socket.emit(salaCreada,{ seUnio: true, mensaje: "Ha creado la sala"})
+            detalleWebRTCDeUsuario[detalle.emisor] = detalle
         } else if(numeroClientesEnSala === 1) {
             socket.join(data.Sala)
             socket.emit(unirASala,{ seUnio: true, mensaje: "Se ha unido a la sala"})
+            detalleWebRTCDeUsuario[detalle.emisor] = detalle
         } else if(numeroClientesEnSala >= 2) {
             if(!io.nsps[namespace].adapter.rooms[data.Sala].sockets[usuariosRegistrados[detalle.emisor]]) {
-                socket.emit(unirASala, {seUnio: false, mensaje: "La sala esta llena"})
+                socket.emit(salaLlena, {seUnio: false, mensaje: "La sala esta llena"})
             }
         }
 
@@ -85,29 +101,116 @@ function salirSala(io, socket, os) {
         if(detalleWebRTCDeUsuario[detalle.emisor] !== undefined) {
             detalleWebRTCDeUsuario[detalle.emisor] = undefined
         }
-        console.log(detalle);
+        //console.log(detalle);
         socket.leave(data.Sala)
         socket.emit(salirDeSala,{desvinculado: true})
+
+        if(usuariosRegistrados[detalle.receptor] !== undefined && detalleWebRTCDeUsuario[detalle.receptor] !== undefined) {
+            socket.to(usuariosRegistrados[detalle.receptor]).emit(receptorSalioDeSala, {})
+        }
 
     });
 }
 
 //Manejador oferta webrtc
-function enviarOfertaAReceptor(io, socket, os) {
-    socket.on(enviarOfertaReceptor, (data)=>{
+function recibirMensaje(io, socket, os) {
+    socket.on(mensaje, (data)=>{
         
         const detalle = JSON.parse(JSON.stringify(data))
-        detalleWebRTCDeUsuario[detalle.emisor] = detalle
-
-        if(detalleWebRTCDeUsuario[detalle.receptor] == undefined) {
-            console.log("Usuario no conectado")
-        } else {
-            io.of(namespace).to(usuariosRegistrados[detalle.emisor]).emit(enviarOfertaReceptor,detalleWebRTCDeUsuario[detalle.receptor])
-            //io.of(namespace).to(usuariosRegistrados[detalle.receptor]).emit(enviarOfertaReceptor,detalleWebRTCDeUsuario[detalle.emisor])
+        //console.log(detalle)
+        if(detalleWebRTCDeUsuario[detalle.receptor] != undefined) {
+            socket.to(usuariosRegistrados[detalle.receptor]).emit(mensaje,detalle)
         }
-        console.log(detalle)
+        socket.emit(mensaje, detalle)
+    });
+}
+
+//Manejador tiempo videollamada
+function recibirTiempoVideollamada(io, socket, os) {
+    socket.on(tiempoVideollamada, (data) => {
+        const detalle = JSON.parse(JSON.stringify(data))
+        tiempoVideollamadaSala[detalle.emisor] = detalle
+        if(tiempoVideollamadaSala[detalle.receptor] !== undefined) {
+            var minuteroEmisor = detalle.minutero
+            var segunderoEmisor = detalle.segundero
+            var minuteroReceptor = tiempoVideollamadaSala[detalle.receptor].minutero
+            var segunderoReceptor = tiempoVideollamadaSala[detalle.receptor].segundero
+
+            if(minuteroEmisor == minuteroReceptor && segunderoEmisor == segunderoReceptor) {
+                socket.to(usuariosRegistrados[detalle.receptor]).emit(tiempoVideollamada, {
+                    minutero: minuteroEmisor,
+                    segundero: segunderoEmisor,
+                    emisor: usuariosRegistrados[detalle.receptor],
+                    receptor: detalle.emisor,
+                    sala: detalle.Sala
+                })
+                socket.emit(tiempoVideollamada, detalle);
+                return
+            }
+
+            if(minuteroEmisor == minuteroReceptor ) {
+                if(segunderoEmisor < segunderoReceptor) {
+                    var detalleVideollamada = {
+                        minutero: minuteroEmisor,
+                        segundero: segunderoReceptor,
+                        emisor: usuariosRegistrados[detalle.receptor],
+                        receptor: detalle.emisor,
+                        sala: detalle.Sala
+                    }
+                    socket.to(usuariosRegistrados[detalle.receptor]).emit(tiempoVideollamada, detalleVideollamada)
+                    socket.emit(tiempoVideollamada, detalleVideollamada);
+                    return 
+                }
+                var detalleVideollamada = {
+                    minutero: minuteroEmisor,
+                    segundero: segunderoEmisor,
+                    emisor: usuariosRegistrados[detalle.receptor],
+                    receptor: detalle.emisor,
+                    sala: detalle.Sala
+                }
+                socket.to(usuariosRegistrados[detalle.receptor]).emit(tiempoVideollamada, detalleVideollamada)
+                socket.emit(tiempoVideollamada, detalleVideollamada);
+                return 
+            }
+
+            if(minuteroReceptor < minuteroEmisor) {
+                var detalleVideollamada = {
+                    minutero: minuteroEmisor,
+                    segundero: segunderoEmisor,
+                    emisor: usuariosRegistrados[detalle.receptor],
+                    receptor: detalle.emisor,
+                    sala: detalle.Sala
+                }
+                socket.to(usuariosRegistrados[detalle.receptor]).emit(tiempoVideollamada, detalleVideollamada)
+                socket.emit(tiempoVideollamada, detalleVideollamada);
+                return 
+            } else {
+                var detalleVideollamada = {
+                    minutero: minuteroReceptor,
+                    segundero: segunderoReceptor,
+                    emisor: usuariosRegistrados[detalle.receptor],
+                    receptor: detalle.emisor,
+                    sala: detalle.Sala
+                }
+                socket.to(usuariosRegistrados[detalle.receptor]).emit(tiempoVideollamada, detalleVideollamada)
+                socket.emit(tiempoVideollamada, detalleVideollamada);
+            }
+        }
         
     });
+}
+
+//Manejo finalizacion videollamada
+function finalizoVideollamadaPorTiempo(io, socket, os) {
+    socket.on(finalizoVideollamadaTiempo, (data) => {
+        console.log("llego al canal: "+ finalizoVideollamadaTiempo)
+    })
+}
+
+function finalizoVideollamadaPorUsuario(io, socket, os) {
+    socket.on(finalizoVideollamadaUsuario, (data) => {
+        console.log("llego al canal: "+ finalizoVideollamadaUsuario)
+    })
 }
 
 
