@@ -13,8 +13,7 @@ const salirDeSala = "salirDeSala";
 const receptorSalioDeSala = "receptorSalioDeSala"
 const mensaje = "mensaje"
 const tiempoVideollamada = "tiempoVideollamada"
-const finalizoVideollamadaTiempo = "finalizoVideollamadaTiempo"
-const finalizoVideollamadaUsuario = "finalizoVideollamadaTiempo"
+const finalizarVideollamada = "finalizarVideollamada"
 
 
 var usuariosRegistrados = {};
@@ -33,8 +32,6 @@ const streaming = (io, socket, os) => {
     salirSala(io, socket, os)
     recibirMensaje(io, socket, os)
     recibirTiempoVideollamada(io, socket, os);
-    finalizoVideollamadaPorTiempo(io, socket, os);
-    finalizoVideollamadaPorUsuario(io, socket, os);
     console.log("hola Mundo");
 }
 
@@ -101,12 +98,16 @@ function salirSala(io, socket, os) {
         if(detalleWebRTCDeUsuario[detalle.emisor] !== undefined) {
             detalleWebRTCDeUsuario[detalle.emisor] = undefined
         }
-        //console.log(detalle);
+        console.log(detalle);
         socket.leave(data.Sala)
         socket.emit(salirDeSala,{desvinculado: true})
 
         if(usuariosRegistrados[detalle.receptor] !== undefined && detalleWebRTCDeUsuario[detalle.receptor] !== undefined) {
-            socket.to(usuariosRegistrados[detalle.receptor]).emit(receptorSalioDeSala, {})
+            if(detalle.finalizarVideollamada) {
+                socket.to(usuariosRegistrados[detalle.receptor]).emit(finalizarVideollamada,{})
+            } else {
+                socket.to(usuariosRegistrados[detalle.receptor]).emit(receptorSalioDeSala, {})
+            }
         }
 
     });
@@ -198,19 +199,6 @@ function recibirTiempoVideollamada(io, socket, os) {
         }
         
     });
-}
-
-//Manejo finalizacion videollamada
-function finalizoVideollamadaPorTiempo(io, socket, os) {
-    socket.on(finalizoVideollamadaTiempo, (data) => {
-        console.log("llego al canal: "+ finalizoVideollamadaTiempo)
-    })
-}
-
-function finalizoVideollamadaPorUsuario(io, socket, os) {
-    socket.on(finalizoVideollamadaUsuario, (data) => {
-        console.log("llego al canal: "+ finalizoVideollamadaUsuario)
-    })
 }
 
 
